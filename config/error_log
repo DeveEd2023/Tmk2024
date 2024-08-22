@@ -1,0 +1,4 @@
+[23-May-2024 17:33:03 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home1/v4j4bfl5/timonel/config/database.php:18
+Stack trace:
+#0 {main}
+  thrown in /home1/v4j4bfl5/timonel/config/database.php on line 18
