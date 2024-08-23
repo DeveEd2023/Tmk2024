@@ -10,6 +10,13 @@ class Alumno extends Model
     use HasFactory;
     protected $table = 'alumno_seccion';
 
+    protected $fillable = [
+        'ins_usu_id',
+        'ins_seccion_id',
+        'ins_grado_id',
+        'ins_inst_id',
+       
+    ];
 
     static function ruleCrear(): array
     {

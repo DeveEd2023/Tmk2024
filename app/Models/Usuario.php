@@ -16,6 +16,13 @@ class Usuario extends User
     protected $hidden = ['password'];
 
 
+   protected $fillable = [
+        'log_usu_id',
+        'log_nombre',
+        'password',
+     
+    ];
+
 
     static function ruleLogin(): array
     {

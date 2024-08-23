@@ -16,7 +16,7 @@ Route::controller(InicioController::class)->group(function () {
     Route::get('/', 'inicio');
     Route::post('acceso', 'acceso');
     Route::get('salir', 'salir');
-    Route::get('edisal/usuario/login','salir');
+    Route::get('edisal/usuario/login', 'salir');
 });
 Route::middleware(UsuarioMiddleware::class)->group(function () {
     Route::middleware(AlumnoMiddleware::class)->group(function () {
@@ -93,6 +93,9 @@ Route::middleware(UsuarioMiddleware::class)->group(function () {
             Route::get('obtenerAlumno/{id}', 'obtenerAlumno');
             Route::post('nuevoAlumno', 'nuevoAlumno');
             Route::get('eliminarAlumno/{id}', 'eliminarAlumno');
+
+            Route::get('alumnos', 'subirAlumnos');
+            Route::post('guardarAlumunos', 'postRegistrarAlumnos');
         });
         Route::controller(RecursoController::class)->prefix('edisal')->group(function () {
             //Recursos

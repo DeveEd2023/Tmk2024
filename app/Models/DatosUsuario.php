@@ -13,6 +13,16 @@ class DatosUsuario extends Model
     protected $table = "usu_usuario";
 
 
+    protected $fillable = [
+        'usu_rol_id',
+        'usu_inst_id',
+        'usu_nombres',
+        'usu_apellidos',
+        'usu_vigencia_inicio',
+        'usu_vigencia_fin',
+        'usu_contra_plana',
+    ];
+
     static function ruleCrear(): array
     {
         return [

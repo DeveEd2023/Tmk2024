@@ -13,11 +13,15 @@ use App\Models\ProfesorSeccion;
 use App\Models\Roles;
 use App\Models\Seccion;
 use App\Models\Usuario;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 
 class AdminController extends Controller
@@ -156,6 +160,15 @@ class AdminController extends Controller
         return redirect()->back();
     }
 
+
+
+
+
+
+
+
+
+
     //------------------------------------------------------------------- Usuarios -------------------------------------------------------------------
     public function listaUsuario()
     {
@@ -199,38 +212,37 @@ class AdminController extends Controller
         )->validate();
 
 
-       $log = Usuario::select('log_nombre')->where('log_nombre',$request->usuario)->first();
-       
-      // dd($log);
-       
-       
-       if(!$log){
-        $anio_actual = date('Y-m-d');
-        $usuario = new DatosUsuario;
-        $usuario->usu_rol_id = $request->rol;
-        $usuario->usu_inst_id = $request->institucion;
-        $usuario->usu_nombres = $request->nombre;
-        $usuario->usu_apellidos = $request->apellido;
-        $usuario->usu_telefono = $request->telefono;
-        $usuario->usu_email = $request->correo;
-        $usuario->usu_vigencia_inicio = "$anio_actual";
-        $usuario->usu_vigencia_fin = date('Y-m-d', strtotime("+1 year", strtotime($usuario->usu_vigencia_inicio)));
-        $usuario->usu_contra_plana = $request->contraseña;
-        $usuario->save();
+        $log = Usuario::select('log_nombre')->where('log_nombre', $request->usuario)->first();
 
-        $user = new Usuario;
-        $user->log_usu_id = $usuario->id;
-        $user->log_nombre = $request->usuario;
-        $user->password = Hash::make($request->contraseña);;
-        $user->save();
-        Session::flash('type', 'success');
-        Session::flash('message', 'usuario registrado correctamente');
-       }else{
-          Session::flash('type', 'danger');
-        Session::flash('message', 'Nombre de usuario ya registrado');  
-           
-       }
-       
+        // dd($log);
+
+
+        if (!$log) {
+            $anio_actual = date('Y-m-d');
+            $usuario = new DatosUsuario;
+            $usuario->usu_rol_id = $request->rol;
+            $usuario->usu_inst_id = $request->institucion;
+            $usuario->usu_nombres = $request->nombre;
+            $usuario->usu_apellidos = $request->apellido;
+            $usuario->usu_telefono = $request->telefono;
+            $usuario->usu_email = $request->correo;
+            $usuario->usu_vigencia_inicio = "$anio_actual";
+            $usuario->usu_vigencia_fin = date('Y-m-d', strtotime("+1 year", strtotime($usuario->usu_vigencia_inicio)));
+            $usuario->usu_contra_plana = $request->contraseña;
+            $usuario->save();
+
+            $user = new Usuario;
+            $user->log_usu_id = $usuario->id;
+            $user->log_nombre = $request->usuario;
+            $user->password = Hash::make($request->contraseña);;
+            $user->save();
+            Session::flash('type', 'success');
+            Session::flash('message', 'usuario registrado correctamente');
+        } else {
+            Session::flash('type', 'danger');
+            Session::flash('message', 'Nombre de usuario ya registrado');
+        }
+
         return redirect()->back();
     }
 
@@ -724,7 +736,7 @@ class AdminController extends Controller
         return view('administrador.nuevoEspecial')
             ->with('institucion', $institucion);
     }
-    
+
     public function crearEspecial(Request $request)
     {
         Validator::make(
@@ -734,7 +746,7 @@ class AdminController extends Controller
             ProfesorMateria::attrCrear()
         )->validate();
 
-       /* $asignado_seccion = ProfesorSeccion::select('id')
+        /* $asignado_seccion = ProfesorSeccion::select('id')
             ->where('enc_inst_id', $request->institucion)
             ->where('enc_gr_id',  $request->grado)
             ->where('enc_sec_id', $request->seccion)
@@ -745,11 +757,11 @@ class AdminController extends Controller
             ->where('pm_inst_id', $request->institucion)
             ->where('pm_gr_id', $request->grado)
             ->where('pm_sec_id', $request->seccion)
-            ->where('pm_mat_id',$request->materia)
+            ->where('pm_mat_id', $request->materia)
             ->where('pm_usu_id',  $request->profesor)->get();
- 
- //dd($asignado_materia );
-       
+
+        //dd($asignado_materia );
+
         if (count($asignado_materia) > 0) {
             if (count($asignado_materia) > 0) {
                 Session::flash('type', 'danger');
@@ -829,7 +841,6 @@ class AdminController extends Controller
 
     public function nuevoAlumno(Request $request)
     {
-
         Validator::make(
             $request->all(),
             Alumno::ruleCrear()
@@ -872,6 +883,104 @@ class AdminController extends Controller
         Session::flash('type', 'danger');
         Session::flash('message', 'Error: no se pudo realizar la acción.');
         return redirect()->back();
+    }
+    public function subirAlumnos()
+    {
+
+        return view('administrador.subirAlumnos');
+    }
+
+
+
+    public function postRegistrarAlumnos(Request $request)
+    {
+        DB::transaction(function () use ($request) {
+            date_default_timezone_set('America/El_Salvador');
+            $anio = date("Y");
+            $fecha = now();
+            $file = $request->file('file');
+            $path = $file->storeAs('tmp', $file->getClientOriginalName(), 'public');
+
+            // Leer el archivo Excel
+            $spreadsheet = IOFactory::load(storage_path('app/public/' . $path));
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+
+            $contador = 0;
+            $names = [];
+            $usernames = [];
+            $passwords = [];
+
+            foreach ($rows as $key => $row) {
+                // Suponiendo que los datos están en la primera fila (0-indexado)
+                if ($key === 0) continue; // Salta la primera fila si es la cabecera
+
+                $apellidos_nombres = explode(',', $row[0]); // Ajusta el índice según tu archivo
+                if (!empty($apellidos_nombres[0]) && !empty($apellidos_nombres[1])) {
+                    $nombres = ltrim($apellidos_nombres[1]);
+                    $apellidos = ltrim($apellidos_nombres[0]);
+
+                    $firstName = explode(' ', $nombres)[0];
+                    $firstSurname = explode(' ', $apellidos)[0];
+
+                    $username = strtolower($firstName . $firstSurname . $anio);
+                    $contraseña = $this->generar();
+
+                    $usuario = DatosUsuario::create([
+                        'usu_rol_id' => 3,
+                        'usu_inst_id' => $request->institucion,
+                        'usu_nombres' => $nombres,
+                        'usu_apellidos' => $apellidos,
+                        'usu_vigencia_inicio' => $fecha,
+                        'usu_vigencia_fin' => $fecha->copy()->addYears(1),
+                        'usu_contra_plana' => $contraseña,
+                    ]);
+
+                    Usuario::create([
+                        'log_usu_id' => $usuario->id,
+                        'log_nombre' => $username,
+                        'password' => Hash::make($contraseña),
+                    ]);
+
+                    Alumno::create([
+                        'ins_usu_id' => $usuario->id,
+                        'ins_seccion_id' => $request->seccion,
+                        'ins_grado_id' => $request->grado,
+                        'ins_inst_id' => $request->institucion,
+                    ]);
+
+                    $contador++;
+                    $names[] = $nombres . " " . $apellidos;
+                    $usernames[] = $username;
+                    $passwords[] = $contraseña;
+                }
+            }
+
+            if ($contador > 0) {
+                return back()->with([
+                    'message' => $contador . ' Usuarios Agregados correctamente!',
+                    'class' => 'success',
+                    'names' => $names,
+                    'usernames' => $usernames,
+                    'passwords' => $passwords,
+                ]);
+            } else {
+                return back()->with([
+                    'message' => 'No se registró ningún usuario, Verifique el archivo excel',
+                    'class' => 'danger',
+                ]);
+            }
+
+            Storage::delete('public/' . $path);
+        });
+
+        return redirect()->back();
+    }
+
+    // Método para generar contraseña aleatoria
+    private function generar()
+    {
+        return substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
     }
 
     //------------------------------------------------------------------- Consultas Json -------------------------------------------------------------------

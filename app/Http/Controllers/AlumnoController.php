@@ -4,8 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Alumno;
 use App\Models\DatosUsuario;
+use App\Models\Usuario;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AlumnoController extends Controller
 {
@@ -132,7 +137,7 @@ class AlumnoController extends Controller
             ->first();
 
 
-  
+
 
         return View('alumno.inicio')->with('portadas', $portadas)
             ->with('inst', $img->inst)
@@ -192,4 +197,6 @@ class AlumnoController extends Controller
             return response()->json($archivos);
         }
     }
+
+
 }
