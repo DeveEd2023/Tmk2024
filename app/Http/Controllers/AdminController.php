@@ -912,10 +912,10 @@ class AdminController extends Controller
             $passwords = [];
 
             foreach ($rows as $key => $row) {
-                // Suponiendo que los datos están en la primera fila (0-indexado)
-                if ($key === 0) continue; // Salta la primera fila si es la cabecera
 
-                $apellidos_nombres = explode(',', $row[0]); // Ajusta el índice según tu archivo
+                if ($key === 0) continue;
+
+                $apellidos_nombres = explode(',', $row[0]);
                 if (!empty($apellidos_nombres[0]) && !empty($apellidos_nombres[1])) {
                     $nombres = ltrim($apellidos_nombres[1]);
                     $apellidos = ltrim($apellidos_nombres[0]);
@@ -923,7 +923,9 @@ class AdminController extends Controller
                     $firstName = explode(' ', $nombres)[0];
                     $firstSurname = explode(' ', $apellidos)[0];
 
-                    $username = strtolower($firstName . $firstSurname . $anio);
+                    $randomNumbers = rand(1000, 9999);
+                    $username = strtolower(substr($firstName, 0, 1) . $firstSurname . $randomNumbers);
+
                     $contraseña = $this->generar();
 
                     $usuario = DatosUsuario::create([

@@ -12,7 +12,6 @@ class DatosUsuario extends Model
 
     protected $table = "usu_usuario";
 
-
     protected $fillable = [
         'usu_rol_id',
         'usu_inst_id',
@@ -36,7 +35,6 @@ class DatosUsuario extends Model
             'contraseña' => 'required|min:6|max:20'
         ];
     }
-
 
     static function attrCrear(): array
     {
